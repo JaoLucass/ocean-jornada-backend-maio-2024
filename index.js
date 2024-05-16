@@ -1,76 +1,97 @@
 const express = require('express')
-const app = express()
+const { MongoClient } = require('mongodb')
 
-app.get('/', function (req, res) {
-    res.send('Hello World')
-})
+const dbUrl = 'mongodb+srv://joaolucasidney:xl7ZnqHvGNkOzcdE@cluster0.afbpbpr.mongodb.net/'
+const dbName = 'ocean-jornada-backend-maio-2024'
 
-app.get('/oi', function (req, res) {
-    res.send('Olá mundo!')
-})
+const client = new MongoClient(dbUrl)
 
-// Lista de Itens
-const itens = ['carne', 'ovo', 'batata']
+async function main() {
+    console.log('Conectando banco de dados...')
+    await client.connect()
+    console.log('Banco de dados conectado com sucesso!')
 
-// Endpoint de Read All [GET] /item
-app.get('/item', function (req, res) {
-    res.send(itens.filter[Boolean])
-})
+    const app = express()
 
-// Endpoint de Read By ID [GET]/item/:id
-app.get('/item/:id', function(req, res) {
-    const id = req.params.id
+    app.get('/', function (req, res) {
+        res.send('Hello World')
+    })
 
-    // acessado o item da lista usando ID - 1
-    const item = itens[id-1]
+    app.get('/oi', function (req, res) {
+        res.send('Olá mundo!')
+    })
 
-    res.send(item)
-})
+    // Lista de Itens
+    const itens = ['carne', 'ovo', 'batata']
 
-// Sinalizando que todo o corpo de requisição
-// virá como JSON
-app.use(express.json())
+    const db = client.db(dbName)
+    const collection = db.collection('item')
 
-// Endpoint de Create [POST] /item
-app.post('/item', function(req,res) {
-    // Acessando o corpo da requisição
-    const body = req.body
+    // Endpoint de Read All [GET] /item
+    app.get('/item', async function (req, res) {
+        // Acesso a lista de documentos na collection
+        const documentos = await collection.find().toArray()
+        // Envio os documentos como resposta
+        res.send(documentos)
+    })
 
-    // Acessar o item no corpo da requisição
-    const novoItem = body.nome
+    // Endpoint de Read By ID [GET]/item/:id
+    app.get('/item/:id', function(req, res) {
+        const id = req.params.id
 
-    // Adicionar novo item na lista
-    itens.push(novoItem)
+        // acessado o item da lista usando ID - 1
+        const item = itens[id-1]
 
-    res.send('Item adicionado com sucesso: ' + novoItem)
-})
+        res.send(item)
+    })
 
-// Endpoint de Update [PUT] /item/:id
-app.put('/item/:id', function (req, res) {
-    // Acessar o ID do parametro de rota
-    const id = req.params.id
+    // Sinalizando que todo o corpo de requisição
+    // virá como JSON
+    app.use(express.json())
 
-    // Acessar o item a ser atualizado, a partir do
-    // corpo da requisição
-    const body = req.body
-    const atualizarItem = body.nome
+    // Endpoint de Create [POST] /item
+    app.post('/item', function(req,res) {
+        // Acessando o corpo da requisição
+        const body = req.body
 
-    // Atualizar na lista o item recebido
-    itens[id-1] = atualizarItem
+        // Acessar o item no corpo da requisição
+        const novoItem = body.nome
 
-    res.send('Item atualizado com sucesso: ' + id + ', ' + atualizarItem)
-})
+        // Adicionar novo item na lista
+        itens.push(novoItem)
 
-// Endpoint de Delete [DELETE] /item/:id
-app.delete('/item/:id', function (req, res) {
-    // Acessar o parametro de rota ID
-    const id = req.params.id
+        res.send('Item adicionado com sucesso: ' + novoItem)
+    })
 
-    // Executa a operação de exclusão desse item pelo índice
-    delete itens[id - 1]
+    // Endpoint de Update [PUT] /item/:id
+    app.put('/item/:id', function (req, res) {
+        // Acessar o ID do parametro de rota
+        const id = req.params.id
 
-    //Enviamos uma mensagem de sucesso
-    res.send('Item removido com sucesso: ' + id)
-})
+        // Acessar o item a ser atualizado, a partir do
+        // corpo da requisição
+        const body = req.body
+        const atualizarItem = body.nome
 
-app.listen(3000)
+        // Atualizar na lista o item recebido
+        itens[id-1] = atualizarItem
+
+        res.send('Item atualizado com sucesso: ' + id + ', ' + atualizarItem)
+    })
+
+    // Endpoint de Delete [DELETE] /item/:id
+    app.delete('/item/:id', function (req, res) {
+        // Acessar o parametro de rota ID
+        const id = req.params.id
+
+        // Executa a operação de exclusão desse item pelo índice
+        delete itens[id - 1]
+
+        //Enviamos uma mensagem de sucesso
+        res.send('Item removido com sucesso: ' + id)
+    })
+
+    app.listen(3000)
+}
+
+main()
